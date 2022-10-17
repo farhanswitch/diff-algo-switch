@@ -1,10 +1,10 @@
 {
   "name": "diff-algo-switch",
   "description": "Get differences from two array of string by implementing An O(ND) Difference Algorithm and its Variations\" (Myers, 1986)",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "main": "build/index.js",
   "types": "./build/index.d.ts",
-  "author": "Muhammad Farhan <muhammad_farhan@outloo.co.id>",
+  "author": "Muhammad Farhan <muhammad_farhan@outlook.co.id>",
   "license": "MIT",
   "keywords": [
     "diff",

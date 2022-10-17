@@ -259,9 +259,10 @@ class LcsDiff {
       }
     });
     const arrRes: Array<MappingCommonDataType> = [];
-    for (let index = 0; index < arrCommon.length; index += 2) {
+    const half = arrCommon.length / 2;
+    for (let y = 0; y < half; y++) {
       arrRes.push({
-        [arrCommon[index]]: arrCommon[index + 1],
+        [arrCommon[y]]: arrCommon[y + half],
       });
     }
     return arrRes;
