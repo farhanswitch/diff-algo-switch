@@ -20,6 +20,7 @@ type MappingCommonDataType = {
 export type MappingDiffType = {
   index: number;
   text: string;
+  hasPartner?: boolean;
 };
 
 export type objModif = {
