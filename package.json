@@ -1,0 +1,17 @@
+{
+  "name": "diff-algo-switch",
+  "description": "Get differences from two array of string by implementing An O(ND) Difference Algorithm and its Variations\" (Myers, 1986)",
+  "version": "0.0.1",
+  "main": "build/index.js",
+  "types": "./build/index.d.ts",
+  "author": "Muhammad Farhan <muhammad_farhan@outloo.co.id>",
+  "license": "MIT",
+  "keywords": [
+    "diff",
+    "html",
+    "compare",
+    "semantic",
+    "text"
+  ],
+  "repository": "farhanswitch/diff-algo-switch"
+}
