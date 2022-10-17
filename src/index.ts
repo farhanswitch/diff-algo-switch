@@ -1,19 +1,12 @@
-type SnakeType = {
+export type SnakeType = {
   d: number;
   oldStart: number;
   oldEnd: number;
   newStart: number;
   newEnd: number;
 };
-type Snake = {
-  d: number;
-  aS: number;
-  aE: number;
-  bS: number;
-  bE: number;
-};
 
-type CallbackType = (
+export type CallbackType = (
   oldStart: number,
   oldEnd: number,
   newStart: number,
@@ -24,7 +17,7 @@ type MappingCommonDataType = {
   [x: number]: number;
 };
 
-type MappingDiffType = {
+export type MappingDiffType = {
   index: number;
   text: string;
 };
