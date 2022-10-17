@@ -13,5 +13,8 @@
     "semantic",
     "text"
   ],
-  "repository": "farhanswitch/diff-algo-switch"
+  "repository": "farhanswitch/diff-algo-switch",
+  "dependencies": {
+    "mdiff": "^1.4.2"
+  }
 }
