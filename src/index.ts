@@ -249,15 +249,18 @@ class LcsDiff {
     this.scan(0, this.oldData.length, 0, this.newData.length, callback, dMax);
 
   public getMappingCommon = (): Array<MappingCommonDataType> => {
-    const arrCommon: Array<number> = [];
+    const arrA: Array<number> = [];
+    const arrB: Array<number> = [];
+
     this.scanCommon((oldStart, oldEnd, newStart, newEnd) => {
       for (let i: number = oldStart; i < oldEnd; i++) {
-        arrCommon.push(i);
+        arrA.push(i);
       }
       for (let i: number = newStart; i < newEnd; i++) {
-        arrCommon.push(i);
+        arrB.push(i);
       }
     });
+    const arrCommon: Array<number> = [...arrA, ...arrB];
     const arrRes: Array<MappingCommonDataType> = [];
     const half = arrCommon.length / 2;
     for (let y = 0; y < half; y++) {
