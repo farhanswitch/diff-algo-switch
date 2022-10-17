@@ -322,11 +322,11 @@ class LcsDiff {
       }
       arrOld.push(arrOfObjOld);
       arrNew.push(arrOfObjNew);
-      console.log(
-        " '%s' -> '%s'",
-        this.oldData.slice(oldStart, oldEnd),
-        this.newData.slice(newStart, newEnd)
-      );
+      // console.log(
+      //   " '%s' -> '%s'",
+      //   this.oldData.slice(oldStart, oldEnd),
+      //   this.newData.slice(newStart, newEnd)
+      // );
     });
     return [arrOld, arrNew];
   };
