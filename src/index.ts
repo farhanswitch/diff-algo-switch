@@ -29,7 +29,7 @@ export type objModif = {
 };
 
 type modifList = {
-  [x: number]: string;
+  [x: number | string]: string;
 };
 
 class LcsDiff {
@@ -262,8 +262,8 @@ class LcsDiff {
     });
     const arrCommon: Array<number> = [...arrA, ...arrB];
     const arrRes: Array<MappingCommonDataType> = [];
-    const half = arrCommon.length / 2;
-    for (let y = 0; y < half; y++) {
+    const half: number = arrCommon.length / 2;
+    for (let y: number = 0; y < half; y++) {
       arrRes.push({
         [arrCommon[y]]: arrCommon[y + half],
       });
@@ -302,7 +302,7 @@ class LcsDiff {
     return commonResult;
   };
 
-  public getMappingDiff = () => {
+  public getMappingDiff = (): MappingDiffType[][][] => {
     const arrOld: Array<MappingDiffType>[] = [];
     const arrNew: Array<MappingDiffType>[] = [];
     this.scanDiff((oldStart, oldEnd, newStart, newEnd) => {
