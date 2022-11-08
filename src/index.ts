@@ -13,7 +13,7 @@ export type CallbackType = (
   newEnd: number
 ) => void;
 
-type MappingCommonDataType = {
+export type MappingCommonDataType = {
   [x: number]: number;
 };
 
