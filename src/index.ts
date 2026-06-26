@@ -46,6 +46,11 @@ class LcsDiff {
   protected indexEqual = (oldIndex: number, newIndex: number): boolean =>
     this.equal(this.oldData[oldIndex], this.newData[newIndex]);
 
+  /**
+   * Finds the "middle snake" in the edit graph between the two specified sub-sequences.
+   * This is part of the O(ND) space-optimized bidirectional difference algorithm.
+   * It runs a forward and a backward search simultaneously, looking for an intersection point.
+   */
   protected findMiddleSnake = (
     aBegin: number,
     aFinish: number,
@@ -56,10 +61,12 @@ class LcsDiff {
     const lengthA: number = aFinish - aBegin;
     const lengthB: number = bFinish - bBegin;
 
+    // Delta represents the difference in lengths of the two sequences
     const lengthDelta: number = lengthB - lengthA;
     const isOdd: boolean = lengthDelta % 2 !== 0;
 
     const contourLen: number = 2 * maxDh + 1;
+    // arrForeContours and arrBackContours store the furthest reaching x-positions on diagonals k
     const arrForeContours: Array<number> = new Array<number>(contourLen);
     const arrBackContours: Array<number> = new Array<number>(contourLen);
 
@@ -67,8 +74,10 @@ class LcsDiff {
     arrBackContours[maxDh - 1] = 0;
 
     let d: number = 0;
+    // Iterate through edit distance d
     while (d <= maxDh) {
       let k: number = -d;
+      // Forward path search on diagonal k
       while (k <= d) {
         const dirB: boolean =
           k === -d ||
@@ -87,6 +96,7 @@ class LcsDiff {
         let oldEnd: number = oldStart;
         let newEnd: number = newStart;
 
+        // Keep traversing matches (diagonals/snakes) without incrementing edit distance d
         while (
           oldEnd < aFinish &&
           newEnd < bFinish &&
@@ -96,6 +106,8 @@ class LcsDiff {
           ++newEnd;
         }
         arrForeContours[maxDh + k] = oldEnd - aBegin;
+        
+        // If delta is odd, check if forward search overlaps with backward search
         if (isOdd) {
           const backK: number = k + lengthDelta;
           if (-d < backK && backK < d) {
@@ -113,7 +125,9 @@ class LcsDiff {
         }
         k += 2;
       }
+
       k = -d;
+      // Backward path search on diagonal k
       while (k <= d) {
         const dirB: boolean =
           k === d ||
@@ -134,6 +148,7 @@ class LcsDiff {
         let oldStart: number = oldEnd;
         let newStart: number = newEnd;
 
+        // Keep traversing matches backwards
         while (
           oldStart > aBegin &&
           newStart > bBegin &&
@@ -143,6 +158,8 @@ class LcsDiff {
           --newStart;
         }
         arrBackContours[maxDh + k] = aFinish - oldStart;
+        
+        // If delta is even, check if backward search overlaps with forward search
         if (!isOdd) {
           const foreK: number = k - lengthDelta;
           if (-d <= foreK && foreK <= d) {
@@ -165,6 +182,10 @@ class LcsDiff {
     return null;
   };
 
+  /**
+   * Recursively scans the grid. It locates a middle snake, registers common segments,
+   * and splits the remaining subproblems (before and after the snake) to solve them.
+   */
   protected scan = (
     oldBegin: number,
     oldFinish: number,
@@ -178,13 +199,11 @@ class LcsDiff {
 
     if (oldLength === 0 || newLength === 0) return 0;
     if (dMax == undefined) {
-      //   console.log({ oldLength, newLength });
       dMax = +oldLength + +newLength;
     }
-    // console.log({ dMax });
 
     const maxDh: number = Math.ceil(dMax !== undefined ? dMax / 2 : 0);
-    const middleSnake: any = this.findMiddleSnake(
+    const middleSnake: SnakeType | null = this.findMiddleSnake(
       oldBegin,
       oldFinish,
       newBegin,
@@ -192,25 +211,28 @@ class LcsDiff {
       maxDh
     );
 
-    // console.log({ middleSnake });
     if (middleSnake == null) return null;
-    if (middleSnake?.d === 0) {
-      if (callback && middleSnake?.oldEnd > middleSnake?.oldStart) {
+    
+    // Case 1: Edit distance is 0, meaning sequences are identical
+    if (middleSnake.d === 0) {
+      if (callback && middleSnake.oldEnd > middleSnake.oldStart) {
         callback(
-          middleSnake?.oldStart,
-          middleSnake?.oldEnd,
-          middleSnake?.newStart,
-          middleSnake?.newEnd
+          middleSnake.oldStart,
+          middleSnake.oldEnd,
+          middleSnake.newStart,
+          middleSnake.newEnd
         );
       }
-    } else if (middleSnake.d === 1) {
+    } 
+    // Case 2: Edit distance is 1, a single insertion or deletion
+    else if (middleSnake.d === 1) {
       if (callback) {
         let l: number;
-        if (oldLength < newLength) l = middleSnake?.oldStart - oldBegin;
-        else l = middleSnake?.newStart - newBegin;
+        if (oldLength < newLength) l = middleSnake.oldStart - oldBegin;
+        else l = middleSnake.newStart - newBegin;
 
         if (l > 0) callback(oldBegin, oldBegin + 1, newBegin, newBegin + 1);
-        if (middleSnake?.oldEnd > middleSnake.oldStart)
+        if (middleSnake.oldEnd > middleSnake.oldStart)
           callback(
             middleSnake.oldStart,
             middleSnake.oldEnd,
@@ -218,31 +240,37 @@ class LcsDiff {
             middleSnake.newEnd
           );
       }
-    } else {
+    } 
+    // Case 3: Recursively split subproblems around the middle snake
+    else {
+      // Find paths in the grid segment before the middle snake
       this.scan(
         oldBegin,
-        middleSnake?.oldStart,
+        middleSnake.oldStart,
         newBegin,
-        middleSnake?.newStart,
+        middleSnake.newStart,
         callback
       );
-      if (callback && middleSnake?.oldEnd > middleSnake?.oldStart)
+      
+      // Process the middle snake itself (common matched segment)
+      if (callback && middleSnake.oldEnd > middleSnake.oldStart)
         callback(
-          middleSnake?.oldStart,
-          middleSnake?.oldEnd,
-          middleSnake?.newStart,
-          middleSnake?.newEnd
+          middleSnake.oldStart,
+          middleSnake.oldEnd,
+          middleSnake.newStart,
+          middleSnake.newEnd
         );
 
+      // Find paths in the grid segment after the middle snake
       this.scan(
-        middleSnake?.oldEnd,
+        middleSnake.oldEnd,
         oldFinish,
-        middleSnake?.newEnd,
+        middleSnake.newEnd,
         newFinish,
         callback
       );
     }
-    return middleSnake?.d;
+    return middleSnake.d;
   };
 
   public scanCommon = (callback?: CallbackType, dMax?: number): number | null =>
