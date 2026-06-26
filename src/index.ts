@@ -183,8 +183,9 @@ class LcsDiff {
   };
 
   /**
-   * Recursively scans the grid. It locates a middle snake, registers common segments,
-   * and splits the remaining subproblems (before and after the snake) to solve them.
+   * Recursively scans the grid. It trims common prefix and suffix (which takes O(N) time),
+   * then locates a middle snake on the mismatched middle portion, registers common segments,
+   * and recursively splits the remaining subproblems.
    */
   protected scan = (
     oldBegin: number,
@@ -194,83 +195,125 @@ class LcsDiff {
     callback?: CallbackType,
     dMax?: number
   ): number | null => {
-    const oldLength: number = oldFinish - oldBegin;
-    const newLength: number = newFinish - newBegin;
-
-    if (oldLength === 0 || newLength === 0) return 0;
-    if (dMax == undefined) {
-      dMax = +oldLength + +newLength;
+    // 1. Trim common prefix
+    while (
+      oldBegin < oldFinish &&
+      newBegin < newFinish &&
+      this.indexEqual(oldBegin, newBegin)
+    ) {
+      const oldStart = oldBegin;
+      const newStart = newBegin;
+      while (
+        oldBegin < oldFinish &&
+        newBegin < newFinish &&
+        this.indexEqual(oldBegin, newBegin)
+      ) {
+        oldBegin++;
+        newBegin++;
+      }
+      if (callback) {
+        callback(oldStart, oldBegin, newStart, newBegin);
+      }
     }
 
-    const maxDh: number = Math.ceil(dMax !== undefined ? dMax / 2 : 0);
-    const middleSnake: SnakeType | null = this.findMiddleSnake(
-      oldBegin,
-      oldFinish,
-      newBegin,
-      newFinish,
-      maxDh
-    );
+    // 2. Trim common suffix
+    let suffixLen = 0;
+    while (
+      oldBegin < oldFinish - suffixLen &&
+      newBegin < newFinish - suffixLen &&
+      this.indexEqual(oldFinish - 1 - suffixLen, newFinish - 1 - suffixLen)
+    ) {
+      suffixLen++;
+    }
 
-    if (middleSnake == null) return null;
-    
-    // Case 1: Edit distance is 0, meaning sequences are identical
-    if (middleSnake.d === 0) {
-      if (callback && middleSnake.oldEnd > middleSnake.oldStart) {
-        callback(
-          middleSnake.oldStart,
-          middleSnake.oldEnd,
-          middleSnake.newStart,
-          middleSnake.newEnd
-        );
+    const oldFinishM = oldFinish - suffixLen;
+    const newFinishM = newFinish - suffixLen;
+
+    const oldLength: number = oldFinishM - oldBegin;
+    const newLength: number = newFinishM - newBegin;
+
+    let d = 0;
+    if (oldLength > 0 && newLength > 0) {
+      if (dMax == undefined) {
+        dMax = oldLength + newLength;
       }
-    } 
-    // Case 2: Edit distance is 1, a single insertion or deletion
-    else if (middleSnake.d === 1) {
-      if (callback) {
-        let l: number;
-        if (oldLength < newLength) l = middleSnake.oldStart - oldBegin;
-        else l = middleSnake.newStart - newBegin;
+      const maxDh: number = Math.ceil(dMax / 2);
+      const middleSnake: SnakeType | null = this.findMiddleSnake(
+        oldBegin,
+        oldFinishM,
+        newBegin,
+        newFinishM,
+        maxDh
+      );
 
-        if (l > 0) callback(oldBegin, oldBegin + 1, newBegin, newBegin + 1);
-        if (middleSnake.oldEnd > middleSnake.oldStart)
+      if (middleSnake == null) return null;
+      d = middleSnake.d;
+
+      // Case 1: Edit distance is 0, meaning sequences are identical
+      if (middleSnake.d === 0) {
+        if (callback && middleSnake.oldEnd > middleSnake.oldStart) {
           callback(
             middleSnake.oldStart,
             middleSnake.oldEnd,
             middleSnake.newStart,
             middleSnake.newEnd
           );
-      }
-    } 
-    // Case 3: Recursively split subproblems around the middle snake
-    else {
-      // Find paths in the grid segment before the middle snake
-      this.scan(
-        oldBegin,
-        middleSnake.oldStart,
-        newBegin,
-        middleSnake.newStart,
-        callback
-      );
-      
-      // Process the middle snake itself (common matched segment)
-      if (callback && middleSnake.oldEnd > middleSnake.oldStart)
-        callback(
-          middleSnake.oldStart,
-          middleSnake.oldEnd,
-          middleSnake.newStart,
-          middleSnake.newEnd
-        );
+        }
+      } 
+      // Case 2: Edit distance is 1, a single insertion or deletion
+      else if (middleSnake.d === 1) {
+        if (callback) {
+          let l: number;
+          if (oldLength < newLength) l = middleSnake.oldStart - oldBegin;
+          else l = middleSnake.newStart - newBegin;
 
-      // Find paths in the grid segment after the middle snake
-      this.scan(
-        middleSnake.oldEnd,
-        oldFinish,
-        middleSnake.newEnd,
-        newFinish,
-        callback
-      );
+          if (l > 0) callback(oldBegin, oldBegin + 1, newBegin, newBegin + 1);
+          if (middleSnake.oldEnd > middleSnake.oldStart)
+            callback(
+              middleSnake.oldStart,
+              middleSnake.oldEnd,
+              middleSnake.newStart,
+              middleSnake.newEnd
+            );
+        }
+      } 
+      // Case 3: Recursively split subproblems around the middle snake
+      else {
+        // Find paths in the grid segment before the middle snake
+        this.scan(
+          oldBegin,
+          middleSnake.oldStart,
+          newBegin,
+          middleSnake.newStart,
+          callback
+        );
+        
+        // Process the middle snake itself (common matched segment)
+        if (callback && middleSnake.oldEnd > middleSnake.oldStart)
+          callback(
+            middleSnake.oldStart,
+            middleSnake.oldEnd,
+            middleSnake.newStart,
+            middleSnake.newEnd
+          );
+
+        // Find paths in the grid segment after the middle snake
+        this.scan(
+          middleSnake.oldEnd,
+          oldFinishM,
+          middleSnake.newEnd,
+          newFinishM,
+          callback
+        );
+      }
     }
-    return middleSnake.d;
+
+    // 3. Emit common suffix callback if one exists
+    if (suffixLen > 0 && callback) {
+      callback(oldFinishM, oldFinish, newFinishM, newFinish);
+    }
+
+    return d;
   };
 
   public scanCommon = (callback?: CallbackType, dMax?: number): number | null =>
